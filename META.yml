@@ -1,5 +1,5 @@
 --- #YAML:1.0
-name: Net-ACL-Cisco
+name: Cisco-ACL
 version: 0.1
 author:
   - James FitzGibbon, E<lt>jfitz@CPAN.orgE<gt>.
@@ -15,6 +15,6 @@ build_requires:
 conflicts: {}
 provides:
   Cisco::ACL:
-    file: lib/Net/ACL/Cisco.pm
+    file: lib/Cisco/ACL.pm
     version: 0.1
 generated_by: Module::Build version 0.22

@@ -1,7 +1,17 @@
+2004-01-27 09:34  james
+
+	* Build.PL (1.2), ChangeLog (1.1), MANIFEST (1.2), META.yml (1.2),
+	Makefile.PL (1.2), README (1.2), lib/Cisco/ACL.pm (1.2), t/01_use.t
+	(1.2), t/03_basic.t (1.2), t/04_cgi.t (1.2), t/05_examples.t (1.1):
+
+	Finish port of acl.pl to Cisco::ACL
+
 2004-01-21 16:23  james
 
-	* Build.PL, MANIFEST, MANIFEST.SKIP, META.yml, Makefile.PL, README,
-	  acl.pl, lib/Net/ACL/Cisco.pm, t/01_use.t, t/02_pod.t,
-	  t/03_basic.t, t/04_cgi.t: First stab at putting an OO face on
-	  acl.pl
+	* Build.PL (1.1), MANIFEST (1.1), MANIFEST.SKIP (1.1), META.yml
+	(1.1), Makefile.PL (1.1), README (1.1), acl.pl (1.1),
+	lib/Cisco/ACL.pm (1.1), t/01_use.t (1.1), t/02_pod.t (1.1),
+	t/03_basic.t (1.1), t/04_cgi.t (1.1):
+
+	First stab at putting an OO face on acl.pl
 
