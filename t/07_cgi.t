@@ -2,7 +2,13 @@
 # $Id$
 #
 
-use Test::More tests => 4;
+BEGIN {
+    use Test::More;
+    our $tests = 4;
+    eval "use Test::NoWarnings";
+    $tests++ unless( $@ );
+    plan tests => $tests;
+}
 
 # test failure on parameter non-existence
 my $parm_missing_rx = qr/missing input param/;

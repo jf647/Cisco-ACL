@@ -1,12 +1,18 @@
 #
-# $Id: 04_acls.t,v 1.3 2004/02/03 19:19:34 james Exp $
+# $Id$
 #
 
 use strict;
 use warnings;
 
-use Test::More tests => 19;
-use Test::Exception;
+BEGIN {
+    use Test::More;
+    use Test::Exception;
+    our $tests = 19;
+    eval "use Test::NoWarnings";
+    $tests++ unless( $@ );
+    plan tests => $tests;
+}
 
 my $package = 'Cisco::ACL';
 

@@ -894,6 +894,8 @@ allow for port numbers to be specified in reverse order (highest first).
 
 =head1 COPYRIGHT
 
+Copyright (c) 2004 James FitzGibbon.  All Rights Reserved.
+
 This module is free software.  You may use and/or modify it under the
 same terms as perl itself.
 

@@ -5,8 +5,14 @@
 use strict;
 use warnings;
 
-use Test::More tests => 33;
-use Test::Exception;
+BEGIN {
+    use Test::More;
+    use Test::Exception;
+    our $tests = 33;
+    eval "use Test::NoWarnings";
+    $tests++ unless( $@ );
+    plan tests => $tests;
+}
 
 my $package = 'Cisco::ACL';
 
