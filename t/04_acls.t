@@ -1,11 +1,11 @@
 #
-# $Id: 04_acls.t,v 1.2 2004/01/27 15:34:41 james Exp $
+# $Id: 04_acls.t,v 1.3 2004/02/03 19:19:34 james Exp $
 #
 
 use strict;
 use warnings;
 
-use Test::More tests => 15;
+use Test::More tests => 19;
 use Test::Exception;
 
 my $package = 'Cisco::ACL';
@@ -67,6 +67,16 @@ my @tests;
             'permit tcp 10.1.1.0 0.0.0.63 any eq 22',
             'permit tcp 10.1.1.0 0.0.0.63 any eq 25',
           ],
+        ],
+        [ 1, [ '192.168.1.1/23' ], [ 'any' ], [ 'any' ], [ '8080-8088' ], 'udp',
+          [
+            'permit udp 192.168.0.0 0.0.1.255 any range 8080 8088',
+          ]
+        ],
+        [ 0, [ '192.168.1.1/20' ], [ '25-20' ], [ 'any' ], [ '8088-8000' ], 'tcp',
+          [
+            'deny tcp 192.168.0.0 0.0.15.255 range 20 25 any range 8000 8088',
+          ]
         ],
     );
 

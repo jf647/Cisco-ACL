@@ -76,8 +76,13 @@ ACCESSORS
     Use the word "any" to specify all addresses. For example, all of the
     following are legal:
 
-    10.10.10.20 10.10.10.10-200 20.20.20.20-30.30.30.30,10.10.10.20
-    10.10.10.10-200 10.10.10.10/8 45.45.45.45
+      10.10.10.20
+      10.10.10.10-200
+      20.20.20.20-30.30.30.30
+      10.10.10.20
+      10.10.10.10-200
+      10.10.10.10/8
+      45.45.45.45 
 
     Multiple entries may be passed to the accessor functions.
 
@@ -88,9 +93,8 @@ ACCESSORS
 
   src_port() [list]
     A list of source ports or source port ranges. A range of ports is
-    denoted as two port numbers joined by a "-". The first port must be
-    lower than the second. The same methods as src_addr() (renamed) are also
-    available.
+    denoted as two port numbers joined by a "-". The same methods as
+    src_addr() (renamed) are also available.
 
     Note that while IOS supports port ranges, using a range of ports will
     create as many access lists as the range is large. See "TODO".
@@ -137,6 +141,15 @@ EXAMPLES
       $acl->dst_addr( '24.223.251.222' );
       print "$_\n" for( $acl->acls );
 
+    Using multiple addresses and/or ports: permit SSH and SFTP traffic from
+    192.168.1.1/25 and 10.1.1.1/26 to anywhere.
+
+      my $acl = Cisco::ACL->new(
+        src_addr => [ '192.168.1.1/25', '10.1.1.1/26' ],
+        dst_port => [ 22, 25 ],
+      );
+      print "$_\n" for( $acl->acls );
+
 BUGS
     These are the known limitations from the original acl.pl. I hope to
     address these in the near future.
@@ -145,11 +158,6 @@ BUGS
         Address ranges must be supplied in ascending order, e.g.
         10.10.10.10-10.10.20.20. If you use 10.10.20.20-10.10.10.10 it won't
         handle that.
-
-    * Port Range Syntax
-        Cisco ACL syntax supports a port range specification, like
-        1000-2000. This script doesn't, yet; if you give it 1000-2000 it
-        will happily generate 1000+ access lists for you.
 
     * Permit/Deny in one rule
         Currently there is no way to specify a combination of permit and
@@ -174,9 +182,6 @@ TODO
         I want to build up the test suite to a fair size and then start
         looking for places to make things cleaner, faster, smaller, etc.
 
-    * support Cisco's port range syntax
-        This is a TODO that Chris noted when he gave me the source.
-
     * make sure that everything produced is up-to-date with IOS
         It's been a while since I've had to play with a Cisco, so what I
         know might not be totally up to date with the latest software revs.
@@ -197,6 +202,11 @@ ORIGINAL AUTHOR
     module to do this from scratch when I stumbed across his web version,
     which was procedural. He graciously accepted my offer to OOP-ize the
     code. Any mistakes in this module are probably mine.
+
+CONTRIBUTORS
+    Nicolas Georgel contribued changes to implement Cisco's port range
+    syntax and to allow for port numbers to be specified in reverse order
+    (highest first).
 
 COPYRIGHT
     This module is free software. You may use and/or modify it under the
