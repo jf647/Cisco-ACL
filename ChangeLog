@@ -1,32 +1,22 @@
+2004-05-27 11:20  james
+
+    v0.11 released to CPAN
+
+	Integrate patch from nicolas.georgel@francetelecom.com
+	to support port range syntax and port numbers in reverse (higher first)
+	order.
+
+	Add example using multiple addrs / ports
+
+	Re-gen t/05_examples.t from .pm
+
+	Add a new test to t/04_acls.t
+
+	Indent example addresses to prevent them from running together
+	in the HTML version of the documentation.
+
 2004-01-28 19:18  james
 
-	* Build.PL (1.3), MANIFEST (1.3), META.yml (1.4), README (1.4),
-	lib/Cisco/ACL.pm (1.3), t/01_use.t (1.3), t/05_examples.t (1.2),
-	t/06_breakpoints.t (1.1), t/07_cgi.t (1.1):
-
-	Release v0.10 to CPAN
-
-2004-01-27 09:36  james
-
-	* ChangeLog (1.2), META.yml (1.3), README (1.3):
-
-	Check in pre-dist meta files
-
-2004-01-27 09:34  james
-
-	* Build.PL (1.2), ChangeLog (1.1), MANIFEST (1.2), META.yml (1.2),
-	Makefile.PL (1.2), README (1.2), lib/Cisco/ACL.pm (1.2), t/01_use.t
-	(1.2), t/03_basic.t (1.2), t/04_acls.t (1.2), t/05_examples.t
-	(1.1):
+	v0.10 released to CPAN
 
 	Finish port of acl.pl to Cisco::ACL
-
-2004-01-21 16:23  james
-
-	* Build.PL (1.1), MANIFEST (1.1), MANIFEST.SKIP (1.1), META.yml
-	(1.1), Makefile.PL (1.1), README (1.1), acl.pl (1.1),
-	lib/Cisco/ACL.pm (1.1), t/01_use.t (1.1), t/02_pod.t (1.1),
-	t/03_basic.t (1.1), t/04_acls.t (1.1):
-
-	First stab at putting an OO face on acl.pl
-
