@@ -1,11 +1,11 @@
 #
-# $Id: 04_cgi.t,v 1.1 2004/01/21 22:23:06 james Exp $
+# $Id: 04_acls.t,v 1.2 2004/01/27 15:34:41 james Exp $
 #
 
 use strict;
 use warnings;
 
-use Test::More tests => 13;
+use Test::More tests => 15;
 use Test::Exception;
 
 my $package = 'Cisco::ACL';
@@ -60,6 +60,14 @@ my @tests;
           ],
         ],
 
+        [ 1, [ '192.168.1.1/25', '10.1.1.1/26' ], [ 'any' ], [ 'any' ], [ 22, 25 ], 'tcp',
+          [
+            'permit tcp 192.168.1.0 0.0.0.127 any eq 22',
+            'permit tcp 192.168.1.0 0.0.0.127 any eq 25',
+            'permit tcp 10.1.1.0 0.0.0.63 any eq 22',
+            'permit tcp 10.1.1.0 0.0.0.63 any eq 25',
+          ],
+        ],
     );
 
 }

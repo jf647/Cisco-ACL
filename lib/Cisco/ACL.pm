@@ -1,5 +1,5 @@
 #
-# $Id: ACL.pm,v 1.3 2004/01/29 01:18:11 james Exp $
+# $Id: ACL.pm,v 1.4 2004/01/29 12:15:36 james Exp $
 #
 
 =head1 NAME
@@ -728,6 +728,19 @@ it is TCP or UDP) to or from 24.223.251.222:
   print "$_\n" for( $acl->acls );
   $acl->src_addr_clear;
   $acl->dst_addr( '24.223.251.222' );
+  print "$_\n" for( $acl->acls );
+
+=for example end
+
+Using multiple addresses and/or ports: permit SSH and SFTP traffic from
+192.168.1.1/25 and 10.1.1.1/26 to anywhere.
+
+=for example begin
+
+  my $acl = Cisco::ACL->new(
+    src_addr => [ '192.168.1.1/25', '10.1.1.1/26' ],
+    dst_port => [ 22, 25 ],
+  );
   print "$_\n" for( $acl->acls );
 
 =for example end

@@ -1,9 +1,6 @@
 #!/usr/local/bin/perl -w
-#
-# $Id$
-#
 
-use Test::More tests => 3;
+use Test::More 'no_plan';
 
 package Catch;
 
@@ -64,7 +61,7 @@ eval q{
   my $example = sub {
     local $^W = 0;
 
-#line 708 lib/Cisco/ACL.pm
+#line 709 lib/Cisco/ACL.pm
 
   my $acl = Cisco::ACL->new(
     src_addr => '192.168.0.1',
@@ -77,7 +74,7 @@ eval q{
 
   }
 };
-is($@, '', "example from line 708");
+is($@, '', "example from line 709");
 
     undef $main::_STDOUT_;
     undef $main::_STDERR_;
@@ -88,7 +85,7 @@ eval q{
   my $example = sub {
     local $^W = 0;
 
-#line 722 lib/Cisco/ACL.pm
+#line 723 lib/Cisco/ACL.pm
 
   my $acl = Cisco::ACL->new(
     src_addr => '24.223.251.222',
@@ -103,10 +100,31 @@ eval q{
 
   }
 };
-is($@, '', "example from line 722");
+is($@, '', "example from line 723");
 
     undef $main::_STDOUT_;
     undef $main::_STDERR_;
 
-#
-# EOF
+    undef $main::_STDOUT_;
+    undef $main::_STDERR_;
+eval q{
+  my $example = sub {
+    local $^W = 0;
+
+#line 739 lib/Cisco/ACL.pm
+
+  my $acl = Cisco::ACL->new(
+    src_addr => [ '192.168.1.1/25', '10.1.1.1/26' ],
+    dst_port => [ 22, 25 ],
+  );
+  print "$_\n" for( $acl->acls );
+
+;
+
+  }
+};
+is($@, '', "example from line 739");
+
+    undef $main::_STDOUT_;
+    undef $main::_STDERR_;
+
