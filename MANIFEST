@@ -13,3 +13,5 @@ t/04_acls.t
 t/05_examples.t
 t/06_breakpoints.t
 t/07_cgi.t
+t/08_established.t
+t/09_reset.t
