@@ -8,7 +8,7 @@ use warnings;
 BEGIN {
     use Test::More;
     use Test::Exception;
-    our $tests = 33;
+    our $tests = 41;
     eval "use Test::NoWarnings";
     $tests++ unless( $@ );
     plan tests => $tests;
@@ -75,15 +75,32 @@ while( my($accessor, $value) = each %accessor_tests ) {
         $acl->$accessor($value);
     } "set $accessor";
     if( UNIVERSAL::can($acl, "${accessor}_push") ) {
-        is_deeply($acl->$accessor, $value );
+        is_deeply scalar $acl->$accessor, [ $value ], "$accessor is [ $value ]";
     }
     else {
-        is($acl->$accessor, $value);
+        is $acl->$accessor, $value, "$accessor is $value";
     }
 }
 
 # make sure context return of lists works
 is( ref scalar $acl->acls, 'ARRAY', 'call ->acls in scalar context');
+
+# make sure that we can pass a single value for an attribute that is a C::MM
+# list to the constructor
+lives_ok {
+    $acl = $package->new( dst_port => 21937 );
+} 'pass single value for list attr to constructor';
+isa_ok $acl, 'Cisco::ACL';
+is $acl->dst_port_count, 1, 'count of dst_port list is 1';
+is_deeply scalar $acl->dst_port, [ 21937 ], 'one value stored in dst_port list';
+
+# make sure that we can pass an empty listref for an attribute
+lives_ok {
+    $acl = $package->new( dst_port => [] );
+} 'pass single value for list attr to constructor';
+isa_ok $acl, 'Cisco::ACL';
+is $acl->dst_port_count, 0, 'count of dst_port list is 0';
+is_deeply scalar $acl->dst_port, [ ], 'no values stored in dst_port list';
 
 #
 # EOF

@@ -15,3 +15,5 @@ t/06_breakpoints.t
 t/07_cgi.t
 t/08_established.t
 t/09_reset.t
+t/10_ferment.t
+t/11_decimal_to_bin.t

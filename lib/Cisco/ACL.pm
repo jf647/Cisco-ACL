@@ -95,8 +95,8 @@ sub init
         $self->permit(1);
     }
     
-    # do we only want to match established sessions
-    if( exists $args{established} && $args{established} ) {
+    # do we only want to match established sessions?
+    if( $args{established} ) {
         $self->established(1);
     }
 
@@ -181,7 +181,7 @@ sub _generate
                 }
     	    }
     	}
-    };
+    }
     
     return \@rules;
 
@@ -204,7 +204,7 @@ sub _generate
 
         if ($protocol eq "both") {
         	$protocol = "ip";
-        };
+        }
 
         $rule_string = $action ? "permit" : "deny";
         $rule_string .= " $protocol ";
@@ -217,7 +217,7 @@ sub _generate
         }
         else {
     	$src_elem = "host $src_addr";
-        };
+        }
 
         if ($dst_addr =~ /\//) {
     	$dst_elem = parse_cidr($dst_addr);
@@ -227,21 +227,21 @@ sub _generate
         }
         else {
             $dst_elem = "host $dst_addr";
-        };
+        }
 
         if ($src_port =~ /any/) {
     	$src_p_elem = "";
         }
         else {
     	$src_p_elem = $src_port;
-        };
+        }
 
         if ($dst_port =~ /any/) {
     	$dst_p_elem = "";
         }
         else {
     	$dst_p_elem = $dst_port;
-        };
+        }
 
         $rule_string .= "$src_elem $src_p_elem $dst_elem $dst_p_elem";
         if( $established ) {
@@ -251,7 +251,7 @@ sub _generate
         $rule_string =~ s/\s+$//;
         return $rule_string;
 
-    };
+    }
 
     #
     #-------------------------------------------------------------------
@@ -263,7 +263,7 @@ sub _generate
         # single address or a single cidr specification.
 
         my @list = @_;
-        if ($list[0] =~ /any/) { return("any"); };
+        return 'any' if( $list[0] =~ /any/ );
 
         my (@elements,$addr,@endpoints,@octets1,@octets2,$start,$end,$i,
     	$number_of_endpoints,$number_of_octets,$done,$dec_start,$dec_end,@george,$remaining);
@@ -276,10 +276,9 @@ sub _generate
     	else {
     	    @endpoints = split(/\-/, $addr);
     	    $number_of_endpoints = @endpoints;
-    	    if ($number_of_endpoints != 2) {
-    		next;  # something is screwey; probably something like
-                           # 10.10.10.10-20-30.  Silently shitcan it.
-    	    };
+            # something is screwey; probably something like
+            # 10.10.10.10-20-30.  Silently shitcan it.
+    	    next if ($number_of_endpoints != 2);
 
     	    # Two cases left; x.x.x.x-y.y.y.y and x.x.x.x-y
     	    #
@@ -317,9 +316,7 @@ sub _generate
                 @endpoints = split(/\-/, $tidbit);
             
                 $number_of_endpoints = @endpoints;
-                if ($number_of_endpoints != 2) {
-                    next;
-                };
+                next if( $number_of_endpoints != 2 );
                 
                 $start = $endpoints[0];
                 $end = $endpoints[1];
@@ -327,7 +324,7 @@ sub _generate
                 # flip range ends if they are backward
                 if ($start >= $end) {
                     ($start, $end) = ($end, $start);
-                };
+                }
 		
                 push @elements, "range $start $end";
 	        
@@ -337,11 +334,11 @@ sub _generate
                 push @elements, "eq $tidbit";
             
             }
-        };
+        }
         
         return(@elements);
     
-    };
+    }
     
     #
     #-------------------------------------------------------------------
@@ -356,13 +353,13 @@ sub _generate
         my $bin_mask = ip_to_bin($mask);
         my @bits = split(//, $bin_mask);
         foreach my $toggle_bait (@bits) {
-    	if ($toggle_bait eq "1") {
-    	    $toggle_bait = "0";
-    	}
-    	else {
-    	    $toggle_bait = "1";
-    	};
-        };
+          	if ($toggle_bait eq "1") {
+          	    $toggle_bait = "0";
+      	    }
+          	else {
+          	    $toggle_bait = "1";
+      	    }
+        }
         my $inv_bin = join "",@bits;
         my $inv_mask = bin_to_ip($inv_bin);
         return "$start $inv_mask ";
@@ -384,70 +381,70 @@ sub _generate
 
         my $range = shift(@_);
         my @list_to_date = @_;
-        my ($start,$end,$difference,$i,$got_it,@working_list,
+        my($start,$end,$difference,$i,$got_it,@working_list,
     	$trial_start,$trial_end,$dotted_start,$block_found,$remaining_range);
 
-        if ($range eq "") { return(@list_to_date) };   # an end condition
+        return @list_to_date if( $range eq "" );
 
         ($start, $end) = split(/\-/, $range);
         $difference = $end - $start;
 
         if ($difference == 0) {
 
-    	# The range is one address (i.e. start and end are the same);
-    	# return it in dotted notation and we're at another end condition.
+           	# The range is one address (i.e. start and end are the same);
+           	# return it in dotted notation and we're at another end condition.
 
-    	push @list_to_date, decimal_to_ip($start);
-    	return(@list_to_date);
-        };
+           	push @list_to_date, decimal_to_ip($start);
+           	return(@list_to_date);
+        }
 
         $got_it = 0;
         for ($i = 1; $i < 31; $i++) {
 
-    	# We'll only try to put 1 block per call of this subroutine
-    	if ($got_it) { last };
+        	# We'll only try to put 1 block per call of this subroutine
+        	last if $got_it;
 
-    	# Using the cidr size for this loop iteration, calculate what
-    	# the block of that size would be for the start address we
-    	# have, then compare that to the range we're looking for.
-    	# 
-    	($trial_start, $trial_end) = ip_to_endpoints(decimal_to_ip($start),$i); # dotted
-    	$trial_start = ip_to_decimal($trial_start);          # now decimal
-    	$trial_end = ip_to_decimal($trial_end);
+        	# Using the cidr size for this loop iteration, calculate what
+        	# the block of that size would be for the start address we
+        	# have, then compare that to the range we're looking for.
+        	# 
+        	($trial_start, $trial_end) = ip_to_endpoints(decimal_to_ip($start),$i); # dotted
+        	$trial_start = ip_to_decimal($trial_start);          # now decimal
+        	$trial_end = ip_to_decimal($trial_end);
 
-    	#
-    	# Ok, now these are in decimal
-    	#
-    	if ($trial_start == $start) {
-    	    # Woo hoo, the start of the range is aligned with a cidr boundary.
-    	    # Is it the right one?  We know it's the biggest possible,
-    	    # but it may be too big.  If so, just move on to the next
-    	    # $i (i.e. next smaller sized block) and try again.
-    	    #
-    	    if ($trial_end > $end) { next; };
+        	#
+        	# Ok, now these are in decimal
+        	#
+        	if ($trial_start == $start) {
+        	    # Woo hoo, the start of the range is aligned with a cidr boundary.
+        	    # Is it the right one?  We know it's the biggest possible,
+        	    # but it may be too big.  If so, just move on to the next
+        	    # $i (i.e. next smaller sized block) and try again.
+        	    #
+        	    next if ($trial_end > $end);
 
-    	    # otherwise, it's the money...
-    	    #
-    	    $got_it = 1;
-    	    $dotted_start = decimal_to_ip($start);
-    	    $block_found = "$dotted_start/$i";
-    	    $start += (($trial_end - $start) + 1);
-    	    #
-    	    # Ok, now we've reduced the range by the amount of space
-    	    # in the block we just found.  
-    	    #
-    	    # The extra '+1' above means that the next start point
-    	    # will be one address beyond the end of the block we
-    	    # just found (otherwise we'd find a few individual addresses
-    	    # twice).  However, it also means that for the final block,
-    	    # $start is > $end by 1.  We have to check for that before
-    	    # returning the values; if we let it through we'll
-    	    # spin forever...
-    	    #
-    	}
-    	else {
-    	    next;  # try the next smaller size block
-    	}
+        	    # otherwise, it's the money...
+        	    #
+        	    $got_it = 1;
+        	    $dotted_start = decimal_to_ip($start);
+        	    $block_found = "$dotted_start/$i";
+        	    $start += (($trial_end - $start) + 1);
+        	    #
+        	    # Ok, now we've reduced the range by the amount of space
+        	    # in the block we just found.  
+        	    #
+        	    # The extra '+1' above means that the next start point
+        	    # will be one address beyond the end of the block we
+        	    # just found (otherwise we'd find a few individual addresses
+        	    # twice).  However, it also means that for the final block,
+        	    # $start is > $end by 1.  We have to check for that before
+        	    # returning the values; if we let it through we'll
+        	    # spin forever...
+        	    #
+        	}
+        	else {
+        	    next;  # try the next smaller size block
+        	}
         }  # for loop
 
         # Ok, we're done trying cidr blocks.  If we found one, return it
@@ -455,21 +452,25 @@ sub _generate
         # remaining range.
 
         if ($got_it) {
-    	# We already calculated $block_found
-    	$remaining_range = "$start-$end";
-    	if ($start > $end) { $remaining_range = "" }
+    	    # We already calculated $block_found
+        	$remaining_range = "$start-$end";
+    	    if ($start > $end) {
+    	        $remaining_range = ""
+    	    }
         }
         else {
-    	$block_found = decimal_to_ip($start);
-    	$start++;
-    	$remaining_range = "$start-$end";
-    	if ($start > $end) { $remaining_range = "" }
+    	    $block_found = decimal_to_ip($start);
+        	$start++;
+        	$remaining_range = "$start-$end";
+        	if ($start > $end) {
+        	    $remaining_range = "";
+        	}
         }
 
         push @list_to_date, $block_found;
         return(ferment($remaining_range,@list_to_date));
 
-    };
+    }
 
     #
     #-------------------------------------------------------------------
@@ -488,11 +489,11 @@ sub _generate
         $zeros = "00000000000000000000000000000000";
         $ones  = "11111111111111111111111111111111";
         for(my $i=0; $i<=($cidr-1); $i++) {
-    	substr($zeros,$i,1) = substr($bin_address,$i,1);
-        substr($ones,$i,1) = substr($bin_address,$i,1)
-        };
+        	substr($zeros,$i,1) = substr($bin_address,$i,1);
+            substr($ones,$i,1) = substr($bin_address,$i,1)
+        }
         return(bin_to_ip($zeros), bin_to_ip($ones));
-    };
+    }
 
     ###########################################################################
 
@@ -507,7 +508,7 @@ sub _generate
         }
         my $mask = bin_to_ip($bin);
         return($mask);
-    };
+    }
 
     ############################################################################
 
@@ -517,7 +518,7 @@ sub _generate
         ($a, $b, $c, $d) = split(/\./, $address);
         $i = (256**3)*$a + (256**2)*$b + 256*$c + $d ;
         return($i);
-    };
+    }
 
     ############################################################################
     #
@@ -526,7 +527,7 @@ sub _generate
 
     sub decimal_to_ip {
         return bin_to_ip(decimal_to_bin($_[0]));
-    };
+    }
 
     ############################################################################
 
@@ -535,30 +536,30 @@ sub _generate
         $decimal = $_[0];
         @bits = "";
         for ($i=0;$i<=31;$i++) {
-    	$bits[$i] = "0";
-        };
+        	$bits[$i] = "0";
+        }
         if ($decimal >= 2**32) {
-    	die "Error: exceeded MAXINT.\n\n";
-        };
+        	die "Error: exceeded MAXINT.\n\n";
+        }
         
         for ($i=0; $i<=31; $i++) {
-    	if ($decimal >= 2**(31 - $i)) {
-    	    $bits[$i] = "1";
-    	    $decimal -= 2**(31 - $i);
-    	}
-        };
+        	if ($decimal >= 2**(31 - $i)) {
+        	    $bits[$i] = "1";
+    	        $decimal -= 2**(31 - $i);
+        	}
+        }
 
         $bin_string = "";
         $bin_string = join('',@bits);
 
         if ($decimal != 0) {
-    	print "\nWARNING!!\nDANGER, WILL ROBINSON!!\nTHERE IS A GRUE NEARBY!!\n\n";
-    	print "A really simple check of decimal-to binary conversion choked!\n\n";
-    	print "Decimal value (expected zero): $decimal\nBinary result: $bin_string\n";
-    	die "\nSuddenly the lights go out...\n\nYou hear a grumbling sound...\n\nYou have been eaten by a grue.\n\n";
-        };
+        	print "\nWARNING!!\nDANGER, WILL ROBINSON!!\nTHERE IS A GRUE NEARBY!!\n\n";
+        	print "A really simple check of decimal-to binary conversion choked!\n\n";
+        	print "Decimal value (expected zero): $decimal\nBinary result: $bin_string\n";
+        	die "\nSuddenly the lights go out...\n\nYou hear a grumbling sound...\n\nYou have been eaten by a grue.\n\n";
+        }
         return($bin_string);
-    };
+    }
 
     ##############################################################
 
@@ -576,7 +577,7 @@ sub _generate
         $octets[3] = bin_to_decimal($binoct4);
         $address = join('.',@octets);
         return($address);
-    };
+    }
 
     ##############################################################
     # ip_to_bin
@@ -588,9 +589,20 @@ sub _generate
         $x = ip_to_decimal($ipaddr);
         $y = decimal_to_bin($x);
         return($y);
-    };
+    }
 
     ############################################################################
+
+=begin hidden
+
+=head1 bin_to_decimal($binary, $decimal, $i, $power, $bit, $total)
+
+Converts a binary value to a decimal value.  Assumes an 8-bit unsigned
+integer max.  Only meant to be called from bin_to_ip.
+
+=end hidden
+
+=cut
 
     sub bin_to_decimal {
 
@@ -601,14 +613,14 @@ sub _generate
         $binary = $_[0];
         $total = 0;
         for ($i=0; $i<=7; $i++) {
-    	$power = 7 - $i;
-    	$bit = substr($binary,$i,1);
-    	if ($bit) {
-    	    $total += 2**$power;
-    	}
-        };
+        	$power = 7 - $i;
+        	$bit = substr($binary,$i,1);
+        	if ($bit) {
+    	        $total += 2**$power;
+        	}
+        }
         return($total);
-    };
+    }
 
 }
 

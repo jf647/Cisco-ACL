@@ -20,14 +20,13 @@ use_ok($package);
 
 my $acl;
 lives_ok {
-    $acl = $package->new;
+    $acl = $package->new( established => 1 );
 } 'create an ACL object';
 isa_ok($acl, $package);
 
 $acl->permit(1);
 $acl->dst_addr( '1.1.1.1' );
 $acl->dst_port( '21937' );
-$acl->established(1);
 $acl->protocol('tcp');
 
 my $expected = "permit tcp any host 1.1.1.1 eq 21937 established";

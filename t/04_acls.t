@@ -8,7 +8,7 @@ use warnings;
 BEGIN {
     use Test::More;
     use Test::Exception;
-    our $tests = 19;
+    our $tests = 42;
     eval "use Test::NoWarnings";
     $tests++ unless( $@ );
     plan tests => $tests;
@@ -35,9 +35,9 @@ my @tests;
 
     @tests = (
 
-        [ 1, [ '10.1.1.1' ], [ 'any' ], [ '10.1.2.1' ], [ 'any' ], 'tcp',
+        [ 1, [ '10.1.1.1' ], [ 'any' ], [ '10.1.2.1' ], [ 'any' ], 'both',
           [
-            'permit tcp host 10.1.1.1 host 10.1.2.1',
+            'permit ip host 10.1.1.1 host 10.1.2.1',
           ],
         ],
 
@@ -84,6 +84,39 @@ my @tests;
             'deny tcp 192.168.0.0 0.0.15.255 range 20 25 any range 8000 8088',
           ]
         ],
+        [ 0, [ '192.168.1.1-10' ], [ '25-20' ], [ 'any' ], [ '8088-8000' ], 'tcp',
+          [
+            'deny tcp host 192.168.1.1 range 20 25 any range 8000 8088',
+            'deny tcp host 192.168.1.2 range 20 25 any range 8000 8088',
+            'deny tcp host 192.168.1.3 range 20 25 any range 8000 8088',
+            'deny tcp 192.168.1.4 0.0.0.3 range 20 25 any range 8000 8088',
+            'deny tcp host 192.168.1.8 range 20 25 any range 8000 8088',
+            'deny tcp host 192.168.1.9 range 20 25 any range 8000 8088',
+            'deny tcp host 192.168.1.10 range 20 25 any range 8000 8088',
+          ]
+        ],
+        [ 0, [ '192.168.1.1-192.168.1.10' ], [ '25-20' ], [ 'any' ], [ '8088-8000' ], 'tcp',
+          [
+            'deny tcp host 192.168.1.1 range 20 25 any range 8000 8088',
+            'deny tcp host 192.168.1.2 range 20 25 any range 8000 8088',
+            'deny tcp host 192.168.1.3 range 20 25 any range 8000 8088',
+            'deny tcp 192.168.1.4 0.0.0.3 range 20 25 any range 8000 8088',
+            'deny tcp host 192.168.1.8 range 20 25 any range 8000 8088',
+            'deny tcp host 192.168.1.9 range 20 25 any range 8000 8088',
+            'deny tcp host 192.168.1.10 range 20 25 any range 8000 8088',
+          ]
+        ],
+        [ 1, [ '192.168.1.1-2-3' ], [ '25-20' ], [ 'any' ], [ '8088-8000' ], 'tcp',
+          [ ]
+        ],
+        [ 1, [ '192.168.1.1-2' ], [ '25-20-15' ], [ 'any' ], [ '8088-8000' ], 'tcp',
+          [ ]
+        ],
+        [ 0, [ '192.168.1.4-7' ], [ '25-20' ], [ 'any' ], [ '8088-8000' ], 'tcp',
+          [
+            'deny tcp 192.168.1.4 0.0.0.3 range 20 25 any range 8000 8088',
+          ]
+        ],
     );
 
 }
@@ -114,6 +147,15 @@ for( @tests ) {
         protocol => $proto,
     )->acls;
     is_deeply($gotback, $expected, "$name");
+    my @gotback = Cisco::ACL->new(
+        permit   => $permit,
+        src_addr => $src_addr,
+        src_port => $src_port,
+        dst_addr => $dst_addr,
+        dst_port => $dst_port,
+        protocol => $proto,
+    )->acls;
+    is_deeply(\@gotback, $expected, "$name");
 }
 
 #
