@@ -1,5 +1,5 @@
 #
-# $Id: ACL.pm,v 1.5 2004/02/03 19:19:31 james Exp $
+# $Id$
 #
 
 =head1 NAME
