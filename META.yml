@@ -1,0 +1,16 @@
+--- #YAML:1.0
+name: Net-ACL-Cisco
+version: ~
+license: perl
+distribution_type: module
+requires: {}
+recommends: {}
+build_requires:
+  Test::Exception: 0
+  Test::More: 0
+conflicts: {}
+provides:
+  Net::ACL::Cisco:
+    file: lib/Net/ACL/Cisco.pm
+    version: 0.1
+generated_by: Module::Build version 0.21

@@ -1,0 +1,12 @@
+AUTHOR
+    James FitzGibbon, <jfitz@CPAN.org>
+
+ORIGINAL AUTHOR
+    The code in this module started life as acl.pl, a CGI script written by
+    Chris De Young (chd AT chud DOT net). He placed it in the public domain
+    on 12/06/2002. Any mistakes after I adopted the code are mine.
+
+COPYRIGHT
+    This module is free software. You may use and/or modify it under the
+    same terms as perl itself.
+
