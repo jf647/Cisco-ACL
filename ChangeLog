@@ -2,9 +2,8 @@
 
     v0.11 released to CPAN
 
-	Integrate patch from nicolas.georgel@francetelecom.com
-	to support port range syntax and port numbers in reverse (higher first)
-	order.
+	Integrate patch from nicolasgeorgel@yahoo.fr to support port range
+	syntax and port numbers in reverse (higher first) order.
 
 	Add example using multiple addrs / ports
 
@@ -12,8 +11,8 @@
 
 	Add a new test to t/04_acls.t
 
-	Indent example addresses to prevent them from running together
-	in the HTML version of the documentation.
+	Indent example addresses to prevent them from running together in the
+	HTML version of the documentation.
 
 2004-01-28 19:18  james
 
