@@ -1,0 +1,7 @@
+2004-01-21 16:23  james
+
+	* Build.PL, MANIFEST, MANIFEST.SKIP, META.yml, Makefile.PL, README,
+	  acl.pl, lib/Net/ACL/Cisco.pm, t/01_use.t, t/02_pod.t,
+	  t/03_basic.t, t/04_cgi.t: First stab at putting an OO face on
+	  acl.pl
+

@@ -1,16 +1,20 @@
 --- #YAML:1.0
 name: Net-ACL-Cisco
-version: ~
+version: 0.1
+author:
+  - James FitzGibbon, E<lt>jfitz@CPAN.orgE<gt>.
+abstract: generate access control lists for Cisco IOS
 license: perl
-distribution_type: module
-requires: {}
+requires:
+  Class::MethodMaker: 0
+  Params::Validate: 0.65
 recommends: {}
 build_requires:
   Test::Exception: 0
   Test::More: 0
 conflicts: {}
 provides:
-  Net::ACL::Cisco:
+  Cisco::ACL:
     file: lib/Net/ACL/Cisco.pm
     version: 0.1
-generated_by: Module::Build version 0.21
+generated_by: Module::Build version 0.22

@@ -1,26 +1,40 @@
 #
-# $Id$
+# $Id: Cisco.pm,v 1.1 2004/01/21 22:23:06 james Exp $
 #
 
 =head1 NAME
 
-Net::ACL::Cisco - generate access control lists for Cisco IOS
+Cisco::ACL - generate access control lists for Cisco IOS
 
 =head1 SYNOPSIS
 
-  use Net::ACL::Cisco;
-  my $acl = Net::ACL::Cisco->new(
+=for example begin
+
+  use Cisco::ACL;
+  my $acl = Cisco::ACL->new(
     permit   => 1,
     src_addr => '10.1.1.1/24',
     dst_addr => '10.1.2.1/24',
   );
-  print "$_\n" for( $acl->lists );
+  print "$_\n" for( $acl->acls );
 
+=for example end
+  
 =head1 DESCRIPTION
+
+Cisco::ACL is a module to create cisco-style access lists. IOS uses a
+wildcard syntax that is almost but not entirely unlike netmasks, but
+backwards (at least that's how it has always seemed to me).
+
+This module makes it easy to think in CIDR but emit IOS-compatible access
+lists.
+
+The original code for this module was written by Chris De Young, see
+L<"ORIGINAL AUTHOR">.
 
 =cut
 
-package Net::ACL::Cisco;
+package Cisco::ACL;
 
 use strict;
 use warnings;
@@ -35,11 +49,13 @@ use Class::MethodMaker(
     new_with_init => 'new',
     boolean       => 'permit',
     get_set       => [ qw|
-        src_addr
-        src_port
-        dst_addr
-        dst_port
         protocol
+    |],
+    list         => [ qw|
+        src_port
+        dst_port
+        src_addr
+        dst_addr
     |],
 );
 
@@ -59,9 +75,9 @@ sub init
                       optional => 1 },
         dst_addr => { type     => SCALAR|ARRAYREF,
                       optional => 1 },
-        src_port => { type     => SCALAR,
+        src_port => { type     => SCALAR|ARRAYREF,
                       optional => 1 },
-        dst_port => { type     => SCALAR,
+        dst_port => { type     => SCALAR|ARRAYREF,
                       optional => 1 },
         protocol => { type     => SCALAR,
                       optional => 1 },
@@ -78,37 +94,52 @@ sub init
     }
 
     # populate the object
-    $self->src_addr( $args{src_addr} );
-    $self->dst_addr( $args{dst_addr} );
-    $self->src_port( $args{src_port} );
-    $self->dst_port( $args{dst_port} );
     $self->protocol( $args{protocol} );
+    for( qw|src_addr src_port dst_addr dst_port| ) {
+        if( ref $args{$_} eq 'ARRAY' && @{ $args{$_} } ) {
+            $self->$_( @{ $args{$_} } );
+        }
+        elsif( $args{$_} ) {
+            $self->$_( $args{$_} );
+        }
+    }
 
     return $self;
 
 }
 
 # generate the access lists
-sub lists
+sub acls
 {
 
     my $self = shift;
-    my $lists = $self->_doit;
     
-    return wantarray ? @{ $lists } : $lists;
+    # generate the ACLs
+    my $acls = $self->_generate();
+    
+    return wantarray ? @{ $acls } : $acls;
 
 }
 
-## all code below here is from the original acl.pl
-sub _doit
+## all code below here is from the original acl.pl with minor tweaks
+sub _generate
 {
 
     my $self = shift;
-
-    my @source_addr_elements = breakout_addrs($self->src_addr);
-    my @destinatione_addr_elements = breakout_addrs($self->dst_addr);
-    my @source_port_elements = breakout_ports($self->src_port);
-    my @destination_port_elements = breakout_ports($self->dst_port);
+    
+    $DB::single = 1;
+    my @source_addr_elements = breakout_addrs(
+        $self->src_addr_count ? $self->src_addr : 'any'
+    );
+    my @destinatione_addr_elements = breakout_addrs(
+        $self->dst_addr_count ? $self->dst_addr : 'any'
+    );
+    my @source_port_elements = breakout_ports(
+        $self->src_port_count ? $self->src_port : 'any'
+    );
+    my @destination_port_elements = breakout_ports(
+        $self->dst_port_count ? $self->dst_port : 'any'
+    );
 
     my @rules;
     for my $current_src_addr (@source_addr_elements) {
@@ -117,7 +148,7 @@ sub _doit
         	    for my $current_dst_port (@destination_port_elements) {
     	        	my $rule = make_rule(
     	        	    $self->permit,
-                        $self->protocol,
+                        $self->protocol ? $self->protocol : 'tcp',
                         $current_src_addr,
                         $current_dst_addr,
                         $current_src_port,
@@ -205,15 +236,13 @@ sub _doit
         # Split on commas, return a list where every element is either a
         # single address or a single cidr specification.
 
-        my $list = $_[0];
-        if ($list =~ /any/) { return("any"); };
+        my @list = @_;
+        if ($list[0] =~ /any/) { return("any"); };
 
-        my (@elements,$addr,@endpoints,@octets1,@octets2,$start,$end,$i,@unwashed_masses,
+        my (@elements,$addr,@endpoints,@octets1,@octets2,$start,$end,$i,
     	$number_of_endpoints,$number_of_octets,$done,$dec_start,$dec_end,@george,$remaining);
 
-        @unwashed_masses = ref $list eq 'ARRAY' ? @{ $list } : $list;
-
-        foreach $addr( @unwashed_masses ) {
+        foreach $addr( @list ) {
     	if ($addr !~ /\-/) {
     	    push @elements, $addr;  # Not a range and we're returning single addresses and
                                         # cidr notation as is, so nothing to do
@@ -252,11 +281,9 @@ sub _doit
     #
 
     sub breakout_ports {
-        my $list = $_[0];
-        $list =~ s/\///g;   # Told you I'd deal with it later...
-        my (@items,$tidbit,@endpoints,$start,$end,$i,$number_of_endpoints,@elements);
-        @items = split(/,/, $list);
-        foreach $tidbit (@items) {
+        my @list = @_;
+        my ($tidbit,@endpoints,$start,$end,$i,$number_of_endpoints,@elements);
+        foreach $tidbit( @list ) {
     	if ($tidbit =~ /\-/) {
     	    @endpoints = split(/\-/, $tidbit);
 
@@ -561,7 +588,7 @@ __END__
 
 =head1 CONSTRUCTOR
 
-To construct a Net::ACL::Cisco object, call the B<new> method.  The following
+To construct a Cisco::ACL object, call the B<new> method.  The following
 optional arguments can be passed as a hash of key/val pairs:
 
 =over 4
@@ -577,21 +604,25 @@ The opposite of permit.  The value must be true in Perl's eyes.
 
 =item * src_addr
 
-The source address in CIDR format.  May be a single scalar or an arrayref of
-addresses.
+The source address in CIDR format. May be a single scalar or an arrayref of
+addresses. See L<"src_addr()"> for more details. If not provided, defaults
+to 'any'.
 
 =item * src_port
 
-The source port.  If not provided, defaults to 'any'.
+The source port. May be a single scalar or an arrayref of ports or port
+ranges. If not provided, defaults to 'any'.
 
 =item * dst_addr
 
-The destination address in CIDR format.  May be a single scalar or an
-arrayref of addresses.
+The destination address in CIDR format. May be a single scalar or an
+arrayref of addresses. See L<"src_addr()"> for more details on address
+format.  If not provided, defaults to 'any'.
 
 =item * dst_port
 
-The destination port.  If not provided, defaults to 'any'.
+The destination port. May be a single scalar or an arrayref of ports or port
+ranges. If not provided, defaults to 'any'.
 
 =item * protocol
 
@@ -601,11 +632,136 @@ The protocol.  If not provided, defaults to 'tcp'.
 
 =head1 ACCESSORS
 
+A Cisco::ACL object has several accessor methods which may be used to
+get or set the properties of the object. These accessors are generated by
+Class::MethodMaker - for more information see L<Class::MethodMaker>. The
+C::MM type of accessor is in brackets following the accessor name.
+
+=head2 permit() [boolean]
+
+A boolean accessor, it returns 1 or 0 depending on whether the object
+represents a 'permit' rule or a 'deny' rule. Passing a true value to the
+accessor sets it to 1.
+
+There are also clear_permit() and set_permit() methods which set the
+property without requiring an explicit argument.
+
+=head2 src_addr() [list]
+
+A list of source addresses, returned as an arrayref in scalar context and an
+array in list context. Passing an argument replaces the entire content of
+the list. If you want to add an address to the list, use src_addr_push.
+
+Source and destination addresses may be specified in any combination of
+three syntaxes: a single IP address, a range of addresses in the format
+a.a.a.a-b.b.b.b or a.a.a.a-b, or a CIDR block in the format x.x.x.x/nn. You
+may supply a comma-separated list of any or all of these formats. Use the
+word "any" to specify all addresses. For example, all of the following are
+legal:
+
+10.10.10.20
+10.10.10.10-200
+20.20.20.20-30.30.30.30,10.10.10.20,10.10.10.10-200
+10.10.10.10/8,45.45.45.45 
+
+There are also src_addr_pop(), src_addr_shift(), src_addr_unshift(),
+src_addr_unsplice(), src_addr_clear(), src_addr_count(), src_addr_index()
+and src_addr_set() methods which perform the familiar array operations on
+the list of addresses.
+
+=head2 src_port() [list]
+
+A list of source ports or source port ranges. A range of ports is denoted as
+two port numbers joined by a C<->. The first port must be lower than the
+second. The same methods as src_addr() (renamed) are also available.
+
+Note that while IOS supports port ranges, using a range of ports will create
+as many access lists as the range is large. See L<"TODO">.
+
+=head2 dst_addr() [list]
+
+As with src_addr(), but for destination addresses.
+
+=head2 dst_port() [list]
+
+As with src_port(), but for destination ports.
+
+=head2 protocol() [get_set]
+
+If you have Class::MethodMaker v1.xx installed, the object will only have
+the accessor methods described above. If you have Class::MethodMaker v2.xx
+installed then there will be more accessor methods. Only the accessor
+methods documented here are officially supported and tested.
+
 =head1 METHODS
+
+The only useful method of a Cisco::ACL object is B<acls()>, which
+generates the access lists and returns then as an array in list context or
+an arrayref in scalar context.
 
 =head1 EXAMPLES
 
+To create an access list that allows traffic from 192.168.0.1 with any
+source port to any host on the class B network 10.1.1.1/16 with a
+destination port of 21937:
+
+=for example begin
+
+  my $acl = Cisco::ACL->new(
+    src_addr => '192.168.0.1',
+    dst_addr => '10.1.1.1/16',
+    dst_port => 21937,
+  );
+  print "$_\n" for( $acl->acls );
+
+=for example end
+
+To create an access list that will deny all traffic (regardless of whether
+it is TCP or UDP) to or from 24.223.251.222:
+
+=for example begin
+
+  my $acl = Cisco::ACL->new(
+    src_addr => '24.223.251.222',
+    protocol => 'ip',
+  );
+  print "$_\n" for( $acl->acls );
+  $acl->src_addr_clear;
+  $acl->dst_addr( '24.223.251.222' );
+  print "$_\n" for( $acl->acls );
+
+=for example end
+
 =head1 BUGS
+
+These are the known limitations from the original acl.pl. I hope to address
+these in the near future.
+
+=over 4
+
+=item * Address Ranges Ordering
+
+Address ranges must be supplied in ascending order, e.g.
+10.10.10.10-10.10.20.20. If you use 10.10.20.20-10.10.10.10 it won't handle
+that.
+
+=item * Port Range Syntax
+
+Cisco ACL syntax supports a port range specification, like 1000-2000. This
+script doesn't, yet; if you give it 1000-2000 it will happily generate 1000+
+access lists for you.
+
+=item * Permit/Deny in one rule
+
+Currently there is no way to specify a combination of permit and deny rules
+in the same ACL. Generate them separately and edit them together by hand.
+
+This may or may not be addressed based upon feedback received from CPAN
+users. With a web app this bug is an annoyance, but in a program that can
+have two distinct ACL objects, one for permit and one for deny it becomes
+less of a problem.
+
+=back
 
 =head1 TODO
 
@@ -636,21 +792,22 @@ might not be totally up to date with the latest software revs.
 
 =item * support the use of Net::ACL::Match objects
 
-I'd like to be able to pass Net::ACL::Match (written by Martin Lorensen)
-objects into the constructor and generate access-list output based upon
-their properties.
+I'd like to be able to pass Net::ACL::Match objects into the constructor and
+generate access-list output based upon their properties.
 
 =back
 
 =head1 AUTHOR
 
-James FitzGibbon, E<lt>jfitz@CPAN.orgE<gt>
+James FitzGibbon, E<lt>jfitz@CPAN.orgE<gt>.
 
 =head1 ORIGINAL AUTHOR
 
-The code in this module started life as acl.pl, a CGI script written
-by Chris De Young (chd AT chud DOT net).  He placed it in the public
-domain on Dec 6th, 2002.  Any mistakes in this module are probably mine.
+The code in this module started life as acl.pl, a CGI script written by
+Chris De Young (chd AT chud DOT net). I was about to embark on writing a
+module to do this from scratch when I stumbed across his web version, which
+was procedural. He graciously accepted my offer to OOP-ize the code. Any
+mistakes in this module are probably mine.
 
 =head1 COPYRIGHT
 

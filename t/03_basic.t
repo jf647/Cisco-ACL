@@ -1,14 +1,14 @@
 #
-# $Id$
+# $Id: 03_basic.t,v 1.1 2004/01/21 22:23:06 james Exp $
 #
 
 use strict;
 use warnings;
 
-use Test::More 'no_plan';
+use Test::More tests => 33;
 use Test::Exception;
 
-my $package = 'Net::ACL::Cisco';
+my $package = 'Cisco::ACL';
 
 use_ok($package);
 
@@ -50,7 +50,7 @@ my @methods = qw|
     set_permit
     src_addr
     src_port
-    lists
+    acls
 |;
 for( @methods ) {
     can_ok($acl, $_);
@@ -68,11 +68,16 @@ while( my($accessor, $value) = each %accessor_tests ) {
     lives_ok {
         $acl->$accessor($value);
     } "set $accessor";
-    is($acl->$accessor, $value);
+    if( UNIVERSAL::can($acl, "${accessor}_push") ) {
+        is_deeply($acl->$accessor, $value );
+    }
+    else {
+        is($acl->$accessor, $value);
+    }
 }
 
 # make sure context return of lists works
-is( ref scalar $acl->lists, 'ARRAY', 'call ->lists in scalar context');
+is( ref scalar $acl->acls, 'ARRAY', 'call ->acls in scalar context');
 
 #
 # EOF

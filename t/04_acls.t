@@ -1,14 +1,14 @@
 #
-# $Id$
+# $Id: 04_cgi.t,v 1.1 2004/01/21 22:23:06 james Exp $
 #
 
 use strict;
 use warnings;
 
-use Test::More 'no_plan';
+use Test::More tests => 13;
 use Test::Exception;
 
-my $package = 'Net::ACL::Cisco';
+my $package = 'Cisco::ACL';
 
 use_ok($package);
 
@@ -29,23 +29,34 @@ my @tests;
 
     @tests = (
 
-        [ qw|1 10.1.1.1 any 10.1.2.1 any tcp|,
+        [ 1, [ '10.1.1.1' ], [ 'any' ], [ '10.1.2.1' ], [ 'any' ], 'tcp',
           [
             'permit tcp host 10.1.1.1 host 10.1.2.1',
           ],
         ],
 
-        [ 1, [ '10.10.10.10/8', '45.45.45.45' ], 34, '192.168.1.1/27', 'any', 'udp',
+        [ 1, [ '10.10.10.10/8', '45.45.45.45' ], [ 34 ], [ '192.168.1.1/27' ], [ 'any' ], 'udp',
           [
             'permit udp 10.0.0.0 0.255.255.255 eq 34 192.168.1.0 0.0.0.31',
             'permit udp host 45.45.45.45 eq 34 192.168.1.0 0.0.0.31',
           ],
         ],
-
-        [ 0, [ '10.94.98.0/24', '10.94.99.0/24' ], 'any', '10.160.1.125', 21937, 'tcp',
+        [ 0, [ '10.94.98.0/24', '10.94.99.0/24' ], [ 'any' ], [ '10.160.1.125' ], [ 21937 ] , 'tcp',
           [
             'deny tcp 10.94.98.0 0.0.0.255 host 10.160.1.125 eq 21937',
             'deny tcp 10.94.99.0 0.0.0.255 host 10.160.1.125 eq 21937',
+          ],
+        ],
+
+        [ 0, [ '24.223.251.222' ], [ 'any' ], [ 'any' ], [ 'any' ], 'ip',
+          [
+            'deny ip host 24.223.251.222 any',
+          ],
+        ],
+
+        [ 0, [ 'any' ], [ 'any' ], [ '24.223.251.222' ], [ 'any' ], 'ip',
+          [
+            'deny ip any host 24.223.251.222',
           ],
         ],
 
@@ -56,23 +67,29 @@ my @tests;
 for( @tests ) {
     my($permit, $src_addr, $src_port, $dst_addr, $dst_port,
        $proto, $expected) = @{ $_ };
+    my $name = $permit ? "permit" : "deny";
+    $name .= " $proto from " . join(',', @{ $src_addr }) . " port " .
+               join(',', @{ $src_port }) . " to " .
+               join(',', @{ $dst_addr }) . " port " .
+               join(',', @{ $dst_port });
+    
     $acl->permit($permit);
     $acl->src_addr($src_addr);
     $acl->src_port($src_port);
     $acl->dst_addr($dst_addr);
     $acl->dst_port($dst_port);
     $acl->protocol($proto);
-    my $gotback = $acl->lists;
-    is_deeply($gotback, $expected, "$proto from $src_addr port $src_port to $dst_addr port $dst_port");
-    $gotback = Net::ACL::Cisco->new(
+    my $gotback = $acl->acls;
+    is_deeply($gotback, $expected, "$name");
+    $gotback = Cisco::ACL->new(
         permit   => $permit,
         src_addr => $src_addr,
         src_port => $src_port,
         dst_addr => $dst_addr,
         dst_port => $dst_port,
         protocol => $proto,
-    )->lists;
-    is_deeply($gotback, $expected, "$proto from $src_addr port $src_port to $dst_addr port $dst_port");
+    )->acls;
+    is_deeply($gotback, $expected, "$name");
 }
 
 #
