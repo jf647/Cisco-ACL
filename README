@@ -29,6 +29,10 @@ CONSTRUCTOR
     * deny
         The opposite of permit. The value must be true in Perl's eyes.
 
+    * established
+        A boolean value indicating that this ACL should only allow
+        established packets. If not provided, defaults to false.
+
     * src_addr
         The source address in CIDR format. May be a single scalar or an
         arrayref of addresses. See "src_addr()" for more details. If not
@@ -63,6 +67,11 @@ ACCESSORS
 
     There are also clear_permit() and set_permit() methods which set the
     property without requiring an explicit argument.
+
+  established() [boolean]
+    A boolean accessor, it returns 1 or 0 depending on whether the object
+    represents a rule which should only allow established sessions or not.
+    Passing a true value sets it to 1.
 
   src_addr() [list]
     A list of source addresses, returned as an arrayref in scalar context
@@ -110,9 +119,19 @@ ACCESSORS
     supported and tested.
 
 METHODS
-    The only useful method of a Cisco::ACL object is acls(), which generates
-    the access lists and returns then as an array in list context or an
-    arrayref in scalar context.
+  acls()
+    Generates the access lists and returns then as an array in list context
+    or an arrayref in scalar context.
+
+  reset()
+    Resets all of the ACL values. Useful if you want to construct an object,
+    generate an ACL and then re-use the same object for a completely
+    different ACL rather than one which is incrementally different.
+
+    Resetting an ACL object:
+
+    * clears the permit, established and protocol attributes.
+    * empties the source and destination ports and address attribute lists.
 
 EXAMPLES
     To create an access list that allows traffic from 192.168.0.1 with any
@@ -145,6 +164,12 @@ EXAMPLES
         src_addr => [ '192.168.1.1/25', '10.1.1.1/26' ],
         dst_port => [ 22, 25 ],
       );
+      print "$_\n" for( $acl->acls );
+
+    Using the established parameter, permit any sessions which are already
+    established.
+
+      my $acl = Cisco::ACL->new( established => 1 );
       print "$_\n" for( $acl->acls );
 
 BUGS

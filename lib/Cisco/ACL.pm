@@ -1,5 +1,5 @@
 #
-# $Id: ACL.pm,v 1.5 2004/02/03 19:19:31 james Exp $
+# $Id$
 #
 
 =head1 NAME
@@ -19,7 +19,7 @@ Cisco::ACL - generate access control lists for Cisco IOS
   print "$_\n" for( $acl->acls );
 
 =for example end
-  
+
 =head1 DESCRIPTION
 
 Cisco::ACL is a module to create cisco-style access lists. IOS uses a
@@ -36,7 +36,7 @@ package Cisco::ACL;
 use strict;
 use warnings;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 use Carp                    qw|croak|;
 use Params::Validate        qw|:all|;
@@ -44,7 +44,10 @@ use Params::Validate        qw|:all|;
 # set up class methods
 use Class::MethodMaker(
     new_with_init => 'new',
-    boolean       => 'permit',
+    boolean       => [ qw|
+        permit
+        established
+    |],
     get_set       => [ qw|
         protocol
     |],
@@ -64,20 +67,22 @@ sub init
     
     # validate args
     my %args = validate(@_,{
-        permit   => { type     => BOOLEAN,
-                      optional => 1 },
-        deny     => { type     => BOOLEAN,
-                      optional => 1 },
-        src_addr => { type     => SCALAR|ARRAYREF,
-                      optional => 1 },
-        dst_addr => { type     => SCALAR|ARRAYREF,
-                      optional => 1 },
-        src_port => { type     => SCALAR|ARRAYREF,
-                      optional => 1 },
-        dst_port => { type     => SCALAR|ARRAYREF,
-                      optional => 1 },
-        protocol => { type     => SCALAR,
-                      optional => 1 },
+        permit      => { type     => BOOLEAN,
+                         optional => 1 },
+        deny        => { type     => BOOLEAN,
+                         optional => 1 },
+        established => { type     => BOOLEAN,
+                         default  => 0 },
+        src_addr    => { type     => SCALAR|ARRAYREF,
+                         optional => 1 },
+        dst_addr    => { type     => SCALAR|ARRAYREF,
+                         optional => 1 },
+        src_port    => { type     => SCALAR|ARRAYREF,
+                         optional => 1 },
+        dst_port    => { type     => SCALAR|ARRAYREF,
+                         optional => 1 },
+        protocol    => { type     => SCALAR,
+                         optional => 1 },
     });
 
     # permit and deny are mutually exclusive
@@ -88,6 +93,11 @@ sub init
     # do we have allow and is it true?
     if( exists $args{permit} && $args{permit} ) {
         $self->permit(1);
+    }
+    
+    # do we only want to match established sessions
+    if( exists $args{established} && $args{established} ) {
+        $self->established(1);
     }
 
     # populate the object
@@ -116,6 +126,22 @@ sub acls
     my $acls = $self->_generate();
     
     return wantarray ? @{ $acls } : $acls;
+
+}
+
+# reset the object attributes
+sub reset
+{
+
+    my $self = shift;
+
+    $self->clear_permit;
+    $self->clear_established;
+    $self->clear_protocol;
+    $self->clear_src_addr;
+    $self->clear_src_port;
+    $self->clear_dst_addr;
+    $self->clear_dst_port;
 
 }
 
@@ -148,10 +174,9 @@ sub _generate
                         $current_src_addr,
                         $current_dst_addr,
                         $current_src_port,
-                        $current_dst_port
+                        $current_dst_port,
+                        $self->established,
                     );
-                    # trim trailing whitespace
-                    $rule =~ s/\s+$//;
                     push @rules, $rule;
                 }
     	    }
@@ -168,7 +193,8 @@ sub _generate
       
         # Return the rule as a string, withOUT a final CR.
 
-        my($action, $protocol, $src_addr, $dst_addr, $src_port, $dst_port) = @_;
+        my($action, $protocol, $src_addr, $dst_addr,
+           $src_port, $dst_port, $established) = @_;
 
         # $src_port and $dst_port are ready to be inserted in the rule string
         # as is; the clean_input routine prepared them, including prepending
@@ -218,7 +244,11 @@ sub _generate
         };
 
         $rule_string .= "$src_elem $src_p_elem $dst_elem $dst_p_elem";
+        if( $established ) {
+            $rule_string .= " established";
+        }
         $rule_string =~ s/\s+/ /g;
+        $rule_string =~ s/\s+$//;
         return $rule_string;
 
     };
@@ -605,6 +635,11 @@ defaults to true.
 
 The opposite of permit.  The value must be true in Perl's eyes.
 
+=item * established
+
+A boolean value indicating that this ACL should only allow established
+packets.  If not provided, defaults to false.
+
 =item * src_addr
 
 The source address in CIDR format. May be a single scalar or an arrayref of
@@ -648,6 +683,12 @@ accessor sets it to 1.
 
 There are also clear_permit() and set_permit() methods which set the
 property without requiring an explicit argument.
+
+=head2 established() [boolean]
+
+A boolean accessor, it returns 1 or 0 depending on whether the object
+represents a rule which should only allow established sessions or not. 
+Passing a true value sets it to 1.
 
 =head2 src_addr() [list]
 
@@ -699,9 +740,27 @@ methods documented here are officially supported and tested.
 
 =head1 METHODS
 
-The only useful method of a Cisco::ACL object is B<acls()>, which
-generates the access lists and returns then as an array in list context or
+=head2 acls()
+
+Generates the access lists and returns then as an array in list context or
 an arrayref in scalar context.
+
+=head2 reset()
+
+Resets all of the ACL values.  Useful if you want to construct an object,
+generate an ACL and then re-use the same object for a completely different
+ACL rather than one which is incrementally different.
+
+Resetting an ACL object:
+
+=over 4
+
+=item * clears the B<permit>, B<established> and B<protocol> attributes.
+
+=item * empties the source and destination ports and address attribute
+lists.
+
+=back
 
 =head1 EXAMPLES
 
@@ -745,6 +804,16 @@ Using multiple addresses and/or ports: permit SSH and SFTP traffic from
     src_addr => [ '192.168.1.1/25', '10.1.1.1/26' ],
     dst_port => [ 22, 25 ],
   );
+  print "$_\n" for( $acl->acls );
+
+=for example end
+
+Using the established parameter, permit any sessions which are already
+established.
+
+=for example begin
+
+  my $acl = Cisco::ACL->new( established => 1 );
   print "$_\n" for( $acl->acls );
 
 =for example end

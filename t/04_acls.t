@@ -1,5 +1,5 @@
 #
-# $Id: 04_acls.t,v 1.3 2004/02/03 19:19:34 james Exp $
+# $Id$
 #
 
 use strict;

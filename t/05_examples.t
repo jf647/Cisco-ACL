@@ -61,7 +61,7 @@ eval q{
   my $example = sub {
     local $^W = 0;
 
-#line 709 lib/Cisco/ACL.pm
+#line 738 lib/Cisco/ACL.pm
 
   my $acl = Cisco::ACL->new(
     src_addr => '192.168.0.1',
@@ -74,7 +74,7 @@ eval q{
 
   }
 };
-is($@, '', "example from line 709");
+is($@, '', "example from line 738");
 
     undef $main::_STDOUT_;
     undef $main::_STDERR_;
@@ -85,7 +85,7 @@ eval q{
   my $example = sub {
     local $^W = 0;
 
-#line 723 lib/Cisco/ACL.pm
+#line 752 lib/Cisco/ACL.pm
 
   my $acl = Cisco::ACL->new(
     src_addr => '24.223.251.222',
@@ -100,7 +100,7 @@ eval q{
 
   }
 };
-is($@, '', "example from line 723");
+is($@, '', "example from line 752");
 
     undef $main::_STDOUT_;
     undef $main::_STDERR_;
@@ -111,7 +111,7 @@ eval q{
   my $example = sub {
     local $^W = 0;
 
-#line 739 lib/Cisco/ACL.pm
+#line 768 lib/Cisco/ACL.pm
 
   my $acl = Cisco::ACL->new(
     src_addr => [ '192.168.1.1/25', '10.1.1.1/26' ],
@@ -123,7 +123,27 @@ eval q{
 
   }
 };
-is($@, '', "example from line 739");
+is($@, '', "example from line 768");
+
+    undef $main::_STDOUT_;
+    undef $main::_STDERR_;
+
+    undef $main::_STDOUT_;
+    undef $main::_STDERR_;
+eval q{
+  my $example = sub {
+    local $^W = 0;
+
+#line 781 lib/Cisco/ACL.pm
+
+  my $acl = Cisco::ACL->new( established => 1 );
+  print "$_\n" for( $acl->acls );
+
+;
+
+  }
+};
+is($@, '', "example from line 781");
 
     undef $main::_STDOUT_;
     undef $main::_STDERR_;

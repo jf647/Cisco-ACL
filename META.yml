@@ -16,5 +16,5 @@ build_requires:
 provides:
   Cisco::ACL:
     file: lib/Cisco/ACL.pm
-    version: 0.11
-generated_by: Module::Build version 0.24
+    version: 0.12
+generated_by: Module::Build version 0.25
