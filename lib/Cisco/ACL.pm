@@ -36,7 +36,7 @@ package Cisco::ACL;
 use strict;
 use warnings;
 
-our $VERSION = '0.12';
+our $VERSION = '0.12_01';
 
 use Carp                    qw|croak|;
 use Params::Validate        qw|:all|;
@@ -150,16 +150,16 @@ sub _generate
 {
 
     my $self = shift;
-    my @source_addr_elements = breakout_addrs(
+    my @source_addr_elements = _breakout_addrs(
         $self->src_addr_count ? $self->src_addr : 'any'
     );
-    my @destinatione_addr_elements = breakout_addrs(
+    my @destinatione_addr_elements = _breakout_addrs(
         $self->dst_addr_count ? $self->dst_addr : 'any'
     );
-    my @source_port_elements = breakout_ports(
+    my @source_port_elements = _breakout_ports(
         $self->src_port_count ? $self->src_port : 'any'
     );
-    my @destination_port_elements = breakout_ports(
+    my @destination_port_elements = _breakout_ports(
         $self->dst_port_count ? $self->dst_port : 'any'
     );
 
@@ -168,7 +168,7 @@ sub _generate
         for my $current_dst_addr (@destinatione_addr_elements) {
         	for my $current_src_port (@source_port_elements) {
         	    for my $current_dst_port (@destination_port_elements) {
-    	        	my $rule = make_rule(
+    	        	my $rule = _make_rule(
     	        	    $self->permit,
                         $self->protocol ? $self->protocol : 'tcp',
                         $current_src_addr,
@@ -189,7 +189,7 @@ sub _generate
     #-------------------------------------------------------------------
     #
 
-    sub make_rule {
+    sub _make_rule {
       
         # Return the rule as a string, withOUT a final CR.
 
@@ -210,7 +210,7 @@ sub _generate
         $rule_string .= " $protocol ";
 
         if ($src_addr =~ /\//) {
-    	$src_elem = parse_cidr($src_addr);
+    	$src_elem = _parse_cidr($src_addr);
         }
         elsif ($src_addr =~ /any/) {
     	$src_elem = "any";
@@ -220,7 +220,7 @@ sub _generate
         }
 
         if ($dst_addr =~ /\//) {
-    	$dst_elem = parse_cidr($dst_addr);
+    	$dst_elem = _parse_cidr($dst_addr);
         }
         elsif ($dst_addr =~ /any/) {
     	$dst_elem = "any";
@@ -257,7 +257,7 @@ sub _generate
     #-------------------------------------------------------------------
     #
 
-    sub breakout_addrs {
+    sub _breakout_addrs {
 
         # Split on commas, return a list where every element is either a
         # single address or a single cidr specification.
@@ -285,16 +285,16 @@ sub _generate
     	    @octets2 = split(/\./, $endpoints[1]);
     	    $number_of_octets = @octets2;
     	    if ($number_of_octets == 4) {
-    		$dec_start = ip_to_decimal($endpoints[0]);
-    		$dec_end = ip_to_decimal($endpoints[1]);
-    		push @elements, ferment("$dec_start-$dec_end");
+    		$dec_start = _ip_to_decimal($endpoints[0]);
+    		$dec_end = _ip_to_decimal($endpoints[1]);
+    		push @elements, _ferment("$dec_start-$dec_end");
     	    }
     	    else {
     		@octets1 = split(/\./, $endpoints[0]);
     		my $newend = "$octets1[0].$octets1[1].$octets1[2].$octets2[0]";
-    		$dec_start = ip_to_decimal($endpoints[0]);
-    		$dec_end = ip_to_decimal($newend);
-                    push @elements, ferment("$dec_start-$dec_end");
+    		$dec_start = _ip_to_decimal($endpoints[0]);
+    		$dec_end = _ip_to_decimal($newend);
+                    push @elements, _ferment("$dec_start-$dec_end");
     	    }
     	}
         }
@@ -305,7 +305,7 @@ sub _generate
     #-------------------------------------------------------------------
     #
 
-    sub breakout_ports {
+    sub _breakout_ports {
         my @list = @_;
         my ($tidbit,@endpoints,$start,$end,$i,$number_of_endpoints,@elements);
 	   
@@ -344,13 +344,13 @@ sub _generate
     #-------------------------------------------------------------------
     #
 
-    sub parse_cidr {
+    sub _parse_cidr {
         my $bob = $_[0];
         my ($address, $block, $start, $end, $mask, $rev_mask);
         ($address, $block) = split(/\//, $bob);
-        ($start, $end) = ip_to_endpoints($address, $block);
-        $mask = find_mask($block);
-        my $bin_mask = ip_to_bin($mask);
+        ($start, $end) = _ip_to_endpoints($address, $block);
+        $mask = _find_mask($block);
+        my $bin_mask = _ip_to_bin($mask);
         my @bits = split(//, $bin_mask);
         foreach my $toggle_bait (@bits) {
           	if ($toggle_bait eq "1") {
@@ -361,7 +361,7 @@ sub _generate
       	    }
         }
         my $inv_bin = join "",@bits;
-        my $inv_mask = bin_to_ip($inv_bin);
+        my $inv_mask = _bin_to_ip($inv_bin);
         return "$start $inv_mask ";
     }
 
@@ -369,7 +369,7 @@ sub _generate
     #-------------------------------------------------------------------
     #
 
-    sub ferment {
+    sub _ferment {
 
         # Ferment = "cidr-ize" the address range (ha ha, ok, I'll keep
         # my day job.)  Take the range given as xxxx-yyyy (it's decimal!!)
@@ -394,7 +394,7 @@ sub _generate
            	# The range is one address (i.e. start and end are the same);
            	# return it in dotted notation and we're at another end condition.
 
-           	push @list_to_date, decimal_to_ip($start);
+           	push @list_to_date, _decimal_to_ip($start);
            	return(@list_to_date);
         }
 
@@ -408,9 +408,9 @@ sub _generate
         	# the block of that size would be for the start address we
         	# have, then compare that to the range we're looking for.
         	# 
-        	($trial_start, $trial_end) = ip_to_endpoints(decimal_to_ip($start),$i); # dotted
-        	$trial_start = ip_to_decimal($trial_start);          # now decimal
-        	$trial_end = ip_to_decimal($trial_end);
+        	($trial_start, $trial_end) = _ip_to_endpoints(_decimal_to_ip($start),$i); # dotted
+        	$trial_start = _ip_to_decimal($trial_start);          # now decimal
+        	$trial_end = _ip_to_decimal($trial_end);
 
         	#
         	# Ok, now these are in decimal
@@ -426,7 +426,7 @@ sub _generate
         	    # otherwise, it's the money...
         	    #
         	    $got_it = 1;
-        	    $dotted_start = decimal_to_ip($start);
+        	    $dotted_start = _decimal_to_ip($start);
         	    $block_found = "$dotted_start/$i";
         	    $start += (($trial_end - $start) + 1);
         	    #
@@ -459,7 +459,7 @@ sub _generate
     	    }
         }
         else {
-    	    $block_found = decimal_to_ip($start);
+    	    $block_found = _decimal_to_ip($start);
         	$start++;
         	$remaining_range = "$start-$end";
         	if ($start > $end) {
@@ -468,7 +468,7 @@ sub _generate
         }
 
         push @list_to_date, $block_found;
-        return(ferment($remaining_range,@list_to_date));
+        return(_ferment($remaining_range,@list_to_date));
 
     }
 
@@ -476,7 +476,7 @@ sub _generate
     #-------------------------------------------------------------------
     #
 
-    sub ip_to_endpoints {
+    sub _ip_to_endpoints {
         #
         # Various of these routings use strings for bit masks where
         # it would undoubtedly be much more efficient to use real binary
@@ -484,7 +484,7 @@ sub _generate
         #
         my($address,$cidr,$zeros,$ones,$bin_address);
         $address = $_[0];
-        $bin_address = ip_to_bin($address);
+        $bin_address = _ip_to_bin($address);
         $cidr = $_[1];
         $zeros = "00000000000000000000000000000000";
         $ones  = "11111111111111111111111111111111";
@@ -492,12 +492,12 @@ sub _generate
         	substr($zeros,$i,1) = substr($bin_address,$i,1);
             substr($ones,$i,1) = substr($bin_address,$i,1)
         }
-        return(bin_to_ip($zeros), bin_to_ip($ones));
+        return(_bin_to_ip($zeros), _bin_to_ip($ones));
     }
 
     ###########################################################################
 
-    sub find_mask {
+    sub _find_mask {
         my($cidr,$bin,$i);
         $cidr = $_[0];
         $bin = "00000000000000000000000000000000";
@@ -506,13 +506,13 @@ sub _generate
     	    substr($bin,$i,1) = "1"
     	    }
         }
-        my $mask = bin_to_ip($bin);
+        my $mask = _bin_to_ip($bin);
         return($mask);
     }
 
     ############################################################################
 
-    sub ip_to_decimal {
+    sub _ip_to_decimal {
         my($address, $i, $a, $b, $c, $d);
         $address = shift(@_);
         ($a, $b, $c, $d) = split(/\./, $address);
@@ -525,13 +525,13 @@ sub _generate
     # Ok, so, it's a hack... sue me.  :)
     #
 
-    sub decimal_to_ip {
-        return bin_to_ip(decimal_to_bin($_[0]));
+    sub _decimal_to_ip {
+        return _bin_to_ip(_decimal_to_bin($_[0]));
     }
 
     ############################################################################
 
-    sub decimal_to_bin {
+    sub _decimal_to_bin {
         my($decimal,@bits,$i,$bin_string);
         $decimal = $_[0];
         @bits = "";
@@ -563,7 +563,7 @@ sub _generate
 
     ##############################################################
 
-    sub bin_to_ip {
+    sub _bin_to_ip {
         my($bin,$ip,@octets,$binoct1,$binoct2,$binoct3,$binoct4,$address);
         $bin = $_[0];
         @octets = "";
@@ -571,43 +571,32 @@ sub _generate
         $binoct2 = substr($bin,8,8);
         $binoct3 = substr($bin,16,8);
         $binoct4 = substr($bin,24,8);
-        $octets[0] = bin_to_decimal($binoct1);
-        $octets[1] = bin_to_decimal($binoct2);
-        $octets[2] = bin_to_decimal($binoct3);
-        $octets[3] = bin_to_decimal($binoct4);
+        $octets[0] = _bin_to_decimal($binoct1);
+        $octets[1] = _bin_to_decimal($binoct2);
+        $octets[2] = _bin_to_decimal($binoct3);
+        $octets[3] = _bin_to_decimal($binoct4);
         $address = join('.',@octets);
         return($address);
     }
 
     ##############################################################
-    # ip_to_bin
+    # _ip_to_bin
     #
 
-    sub ip_to_bin {
+    sub _ip_to_bin {
         my($ipaddr,$x,$y);
         $ipaddr = $_[0];
-        $x = ip_to_decimal($ipaddr);
-        $y = decimal_to_bin($x);
+        $x = _ip_to_decimal($ipaddr);
+        $y = _decimal_to_bin($x);
         return($y);
     }
 
     ############################################################################
 
-=begin hidden
-
-=head1 bin_to_decimal($binary, $decimal, $i, $power, $bit, $total)
-
-Converts a binary value to a decimal value.  Assumes an 8-bit unsigned
-integer max.  Only meant to be called from bin_to_ip.
-
-=end hidden
-
-=cut
-
-    sub bin_to_decimal {
+    sub _bin_to_decimal {
 
         # Assume 8-bit unsigned integer max
-        # This is only meant to be called from bin_to_ip
+        # This is only meant to be called from _bin_to_ip
 
         my($binary,$decimal,$i,$power,$bit,$total);
         $binary = $_[0];

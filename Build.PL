@@ -1,5 +1,5 @@
 #
-# $Id: Build.PL,v 1.2 2004/01/27 15:34:37 james Exp $
+# $Id$
 #
 
 use Module::Build;

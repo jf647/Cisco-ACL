@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: Cisco-ACL
-version: 0.12
+version: 0.12_01
 author:
   - James FitzGibbon, E<lt>jfitz@CPAN.orgE<gt>.
 abstract: generate access control lists for Cisco IOS
@@ -16,5 +16,5 @@ build_requires:
 provides:
   Cisco::ACL:
     file: lib/Cisco/ACL.pm
-    version: 0.12
-generated_by: Module::Build version 0.25
+    version: 0.12_01
+generated_by: Module::Build version 0.25_02

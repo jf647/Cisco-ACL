@@ -9,3 +9,4 @@ CVS
 acl\.pl
 \.releaserc
 .svn/.*$
+^cover_db

@@ -14,7 +14,7 @@ BEGIN {
 }
 
 use_ok('Cisco::ACL');
-is($Cisco::ACL::VERSION, '0.12', 'check module version');
+is($Cisco::ACL::VERSION, '0.12_01', 'check module version');
 
 #
 # EOF
