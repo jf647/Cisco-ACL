@@ -1,4 +1,7 @@
 #!/usr/local/bin/perl -w
+#
+# $Id$
+#
 
 use Test::More tests => 3;
 
@@ -105,3 +108,5 @@ is($@, '', "example from line 722");
     undef $main::_STDOUT_;
     undef $main::_STDERR_;
 
+#
+# EOF

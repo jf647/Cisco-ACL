@@ -1,5 +1,5 @@
 #
-# $Id: Cisco.pm,v 1.1 2004/01/21 22:23:06 james Exp $
+# $Id: ACL.pm,v 1.2 2004/01/27 15:34:41 james Exp $
 #
 
 =head1 NAME
@@ -29,9 +29,6 @@ backwards (at least that's how it has always seemed to me).
 This module makes it easy to think in CIDR but emit IOS-compatible access
 lists.
 
-The original code for this module was written by Chris De Young, see
-L<"ORIGINAL AUTHOR">.
-
 =cut
 
 package Cisco::ACL;
@@ -39,7 +36,7 @@ package Cisco::ACL;
 use strict;
 use warnings;
 
-our $VERSION = 0.10;
+our $VERSION = '0.10';
 
 use Carp                    qw|croak|;
 use Params::Validate        qw|:all|;
@@ -127,7 +124,6 @@ sub _generate
 
     my $self = shift;
     
-    $DB::single = 1;
     my @source_addr_elements = breakout_addrs(
         $self->src_addr_count ? $self->src_addr : 'any'
     );
@@ -654,15 +650,18 @@ the list. If you want to add an address to the list, use src_addr_push.
 
 Source and destination addresses may be specified in any combination of
 three syntaxes: a single IP address, a range of addresses in the format
-a.a.a.a-b.b.b.b or a.a.a.a-b, or a CIDR block in the format x.x.x.x/nn. You
-may supply a comma-separated list of any or all of these formats. Use the
-word "any" to specify all addresses. For example, all of the following are
-legal:
+a.a.a.a-b.b.b.b or a.a.a.a-b, or a CIDR block in the format x.x.x.x/nn. Use
+the word "any" to specify all addresses. For example, all of the following
+are legal:
 
 10.10.10.20
 10.10.10.10-200
-20.20.20.20-30.30.30.30,10.10.10.20,10.10.10.10-200
-10.10.10.10/8,45.45.45.45 
+20.20.20.20-30.30.30.30,10.10.10.20
+10.10.10.10-200
+10.10.10.10/8
+45.45.45.45 
+
+Multiple entries may be passed to the accessor functions.
 
 There are also src_addr_pop(), src_addr_shift(), src_addr_unshift(),
 src_addr_unsplice(), src_addr_clear(), src_addr_count(), src_addr_index()
@@ -766,7 +765,7 @@ less of a problem.
 =head1 TODO
 
 The initial version of this module is pretty much an OO wrapper around
-Chris De Young's original code.  Future plans include (hopefully in order
+Chris' original code.  Future plans include (hopefully in order
 of implementation):
 
 =over 4
@@ -790,12 +789,14 @@ This is a TODO that Chris noted when he gave me the source.
 It's been a while since I've had to play with a Cisco, so what I know
 might not be totally up to date with the latest software revs.
 
-=item * support the use of Net::ACL::Match objects
-
-I'd like to be able to pass Net::ACL::Match objects into the constructor and
-generate access-list output based upon their properties.
-
 =back
+
+=head1 SEE ALSO
+
+This distribution includes aclmaker.pl, a simple CGI frontend to Cisco::ACL.
+
+If you need a more generic framework for ACLs, take a look at Net::ACL by
+Martin Lorensen.
 
 =head1 AUTHOR
 

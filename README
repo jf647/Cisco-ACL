@@ -18,9 +18,6 @@ DESCRIPTION
     This module makes it easy to think in CIDR but emit IOS-compatible
     access lists.
 
-    The original code for this module was written by Chris De Young, see
-    "ORIGINAL AUTHOR".
-
 CONSTRUCTOR
     To construct a Cisco::ACL object, call the new method. The following
     optional arguments can be passed as a hash of key/val pairs:
@@ -76,13 +73,13 @@ ACCESSORS
     Source and destination addresses may be specified in any combination of
     three syntaxes: a single IP address, a range of addresses in the format
     a.a.a.a-b.b.b.b or a.a.a.a-b, or a CIDR block in the format x.x.x.x/nn.
-    You may supply a comma-separated list of any or all of these formats.
     Use the word "any" to specify all addresses. For example, all of the
     following are legal:
 
-    10.10.10.20 10.10.10.10-200
-    20.20.20.20-30.30.30.30,10.10.10.20,10.10.10.10-200
-    10.10.10.10/8,45.45.45.45
+    10.10.10.20 10.10.10.10-200 20.20.20.20-30.30.30.30,10.10.10.20
+    10.10.10.10-200 10.10.10.10/8 45.45.45.45
+
+    Multiple entries may be passed to the accessor functions.
 
     There are also src_addr_pop(), src_addr_shift(), src_addr_unshift(),
     src_addr_unsplice(), src_addr_clear(), src_addr_count(),
@@ -166,8 +163,8 @@ BUGS
 
 TODO
     The initial version of this module is pretty much an OO wrapper around
-    Chris De Young's original code. Future plans include (hopefully in order
-    of implementation):
+    Chris' original code. Future plans include (hopefully in order of
+    implementation):
 
     * use CPAN modules where possible
         The original code did all it's own CGI processing - I'd like to move
@@ -184,10 +181,12 @@ TODO
         It's been a while since I've had to play with a Cisco, so what I
         know might not be totally up to date with the latest software revs.
 
-    * support the use of Net::ACL::Match objects
-        I'd like to be able to pass Net::ACL::Match objects into the
-        constructor and generate access-list output based upon their
-        properties.
+SEE ALSO
+    This distribution includes aclmaker.pl, a simple CGI frontend to
+    Cisco::ACL.
+
+    If you need a more generic framework for ACLs, take a look at Net::ACL
+    by Martin Lorensen.
 
 AUTHOR
     James FitzGibbon, <jfitz@CPAN.org>.

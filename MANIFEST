@@ -1,3 +1,4 @@
+bin/aclmaker.pl
 Build.PL
 ChangeLog
 foo.pl
@@ -9,5 +10,7 @@ README
 t/01_use.t
 t/02_pod.t
 t/03_basic.t
-t/04_cgi.t
+t/04_acls.t
 t/05_examples.t
+t/06_breakpoints.t
+t/07_cgi.t
