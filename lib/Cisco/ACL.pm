@@ -682,9 +682,6 @@ A list of source ports or source port ranges. A range of ports is denoted as two
 port numbers joined by a C<->. The same methods as src_addr() (renamed) are also
 available.
 
-Note that while IOS supports port ranges, using a range of ports will create
-as many access lists as the range is large. See L<"TODO">.
-
 =head2 dst_addr() [list]
 
 As with src_addr(), but for destination addresses.

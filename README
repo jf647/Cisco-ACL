@@ -96,9 +96,6 @@ ACCESSORS
     denoted as two port numbers joined by a "-". The same methods as
     src_addr() (renamed) are also available.
 
-    Note that while IOS supports port ranges, using a range of ports will
-    create as many access lists as the range is large. See "TODO".
-
   dst_addr() [list]
     As with src_addr(), but for destination addresses.
 
