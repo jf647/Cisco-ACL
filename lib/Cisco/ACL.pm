@@ -1,5 +1,5 @@
 #
-# $Id: ACL.pm,v 1.2 2004/01/27 15:34:41 james Exp $
+# $Id: ACL.pm,v 1.3 2004/01/29 01:18:11 james Exp $
 #
 
 =head1 NAME
@@ -654,12 +654,13 @@ a.a.a.a-b.b.b.b or a.a.a.a-b, or a CIDR block in the format x.x.x.x/nn. Use
 the word "any" to specify all addresses. For example, all of the following
 are legal:
 
-10.10.10.20
-10.10.10.10-200
-20.20.20.20-30.30.30.30,10.10.10.20
-10.10.10.10-200
-10.10.10.10/8
-45.45.45.45 
+  10.10.10.20
+  10.10.10.10-200
+  20.20.20.20-30.30.30.30
+  10.10.10.20
+  10.10.10.10-200
+  10.10.10.10/8
+  45.45.45.45 
 
 Multiple entries may be passed to the accessor functions.
 
